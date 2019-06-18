@@ -14,6 +14,7 @@ parser.add_argument('--result_dir', type=str, default='assets/results',
                     help='Directory name to save the generated images')
 parser.add_argument('--log_dir', type=str, default='assets/logs',
                     help='Directory name to save training logs')
+parser.add_argument('--learning_rate', type=float, default=2e-4)
 
 args = parser.parse_args()
 check_folder(args.checkpoint_dir)
@@ -50,7 +51,8 @@ def main():
             result_dir=args.result_dir,
             log_dir=args.log_dir,
             dim_D=dim_D,
-            dim_G=dim_G
+            dim_G=dim_G,
+            learning_rate = args.learning_rate
         )
 
         gan.build_model()

@@ -13,7 +13,7 @@ import tensorflow.contrib.slim as slim
 
 
 def load_mnist(dataset_name, trainonly=False):
-    data_dir = os.path.join("assets/data", dataset_name)
+    data_dir = os.path.join(".", dataset_name)
 
     def extract_data(filename, num_data, head_size, data_size):
         with gzip.open(filename) as bytestream:
