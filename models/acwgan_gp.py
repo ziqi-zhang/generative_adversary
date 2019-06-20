@@ -4,7 +4,7 @@ import time
 from utils import *
 from models.libs.resnet_ops import *
 from models.libs.ops import linear, gan_batch_norm
-
+from pdb import set_trace as st
 
 class ACWGAN_GP(object):
     model_name = "ACWGAN_GP"  # name for checkpoint
@@ -283,6 +283,7 @@ class ACWGAN_GP(object):
 
         # restore check-point if it exits
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+        # var_name_list = [v.name for v in tf.trainable_variables()]
         if could_load:
             start_epoch = (int)(checkpoint_counter / self.num_batches)
             start_batch_id = checkpoint_counter - start_epoch * self.num_batches
@@ -428,6 +429,7 @@ class ACWGAN_GP(object):
 
     def load(self, checkpoint_dir):
         import re
+
         print(" [*] Reading checkpoints...")
         checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir, self.model_name)
 
