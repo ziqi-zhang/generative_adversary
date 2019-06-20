@@ -39,6 +39,9 @@ def main():
     elif args.dataset == 'celebA':
         dim_D = 64
         dim_G = 64
+    elif args.dataset == 'cifar':
+        dim_D = 128
+        dim_G = 128
 
     with tf.Session(config=tf_config) as sess:
         gan = ACWGAN_GP(

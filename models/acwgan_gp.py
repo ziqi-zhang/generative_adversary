@@ -114,6 +114,38 @@ class ACWGAN_GP(object):
             self.data_X, self.data_y = load_celebA()
 
             self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+
+        elif dataset_name == 'cifar':
+            self.input_height = 32
+            self.input_width = 32
+            self.output_height = 32
+            self.output_width = 32
+
+            self.z_dim = z_dim  # dimension of noise-vector
+            self.c_dim = 3
+            self.n_iters = 100000
+
+            # WGAN_GP parameter
+            self.lambd = 10  # The higher value, the more stable, but the slower convergence
+            self.disc_iters = 5 # The number of critic iterations for one-step of generator
+            # train
+            self.beta1 = 0.0
+            self.beta2 = 0.9
+
+            # test
+            self.sample_num = 64  # number of generated images to be saved
+
+            # code
+            self.len_continuous_code = 2  # gaussian distribution (e.g. rotation, thickness)
+
+            # load svhn
+            self.y_dim = 10
+            self.len_discrete_code = 10  # categorical distribution (i.e. label)
+            self.learning_rate = 0.0002 if learning_rate is None else learning_rate
+            self.data_X, self.data_y = load_cifar()
+
+            # get number of batches for a single epoch
+            self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
         else:
             raise NotImplementedError
 
@@ -121,7 +153,7 @@ class ACWGAN_GP(object):
     def discriminator(self, x, update_collection, reuse=False):
         with tf.variable_scope("discriminator", reuse=reuse):
             output = tf.reshape(x, [-1, self.output_height, self.output_width, self.c_dim])
-            if self.dataset_name in ('mnist', 'svhn'):
+            if self.dataset_name in ('mnist', 'svhn', 'cifar'):
                 output = ResidualBlockDisc(output, self.dim_D, spectral_normed=False, update_collection=update_collection, name="d_residual_block")
                 output = ResidualBlock(output, None, self.dim_D, 3, resample='down', spectral_normed=False,
                                        update_collection=update_collection, name='d_res1')
@@ -165,7 +197,7 @@ class ACWGAN_GP(object):
                 output = conv2d(output, 1, 3, he_init=False, name='g_final')
                 output = tf.sigmoid(output)
 
-            elif self.dataset_name == 'svhn':
+            elif self.dataset_name == 'svhn' or self.dataset_name == 'cifar':
                 output = linear(z, 4 * 4 * self.dim_G, name='g_fc1')
                 output = tf.reshape(output, [-1, 4, 4, self.dim_G])
                 output = ResidualBlock(output, y, self.dim_G, 3, resample='up', name='g_res1', n_labels=self.y_dim)

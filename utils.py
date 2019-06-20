@@ -5,8 +5,10 @@ import scipy.misc
 import scipy.io as sio
 import numpy as np
 import matplotlib.pyplot as plt
-import os, gzip
+import os, gzip, sys
+from pdb import set_trace as st
 import cv2 as cv
+import pickle
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -44,6 +46,7 @@ def load_mnist(dataset_name, trainonly=False):
         X = np.concatenate((trX, teX), axis=0)
         y = np.concatenate((trY, teY), axis=0).astype(np.int)
 
+
     seed = 547
     np.random.seed(seed)
     np.random.shuffle(X)
@@ -59,7 +62,7 @@ def load_mnist(dataset_name, trainonly=False):
 
 def load_svhn(source_class=None, trainonly=False):
     print("[*] Loading SVHN")
-    data_dir = os.path.join("assets", "data", "svhn")
+    data_dir = os.path.join("svhn")
 
     def extract_data(filename):
         data = sio.loadmat(os.path.join(data_dir, filename))
@@ -81,6 +84,7 @@ def load_svhn(source_class=None, trainonly=False):
         X = np.concatenate([trX, teX, exX], axis=0)
         y = np.concatenate([trY, teY, exY], axis=0)
 
+
     if source_class is not None:
         idx = (y == source_class)
         X = X[idx]
@@ -91,7 +95,7 @@ def load_svhn(source_class=None, trainonly=False):
     np.random.shuffle(X)
     np.random.seed(seed)
     np.random.shuffle(y)
-
+    st()
     y_vec = np.zeros((len(y), 10), dtype=np.float)
     y_vec[np.arange(0, len(y)), y] = 1.0
     return X / 255., y_vec
@@ -99,8 +103,8 @@ def load_svhn(source_class=None, trainonly=False):
 
 def load_celebA():
     print("[*] Loading CelebA")
-    X = sio.loadmat('/atlas/u/ruishu/data/celeba64_zoom.mat')['images']
-    y = sio.loadmat('/atlas/u/ruishu/data/celeba_gender.mat')['y']
+    X = sio.loadmat('celeba/celeba64_zoom.mat')['images']
+    y = sio.loadmat('celeba/celeba_gender.mat')['y']
     y = np.eye(2)[y.reshape(-1)]
 
     seed = 547
@@ -109,6 +113,62 @@ def load_celebA():
     np.random.seed(seed)
     np.random.shuffle(y)
     return X / 255., y
+
+def load_cifar():
+    print("[*] Loading Ciifar")
+
+    version = sys.version_info
+    def _load_datafile(filename):
+
+        with open(filename, 'rb') as fo:
+            if version.major == 3:
+              data_dict = pickle.load(fo, encoding='bytes')
+            else:
+              data_dict = pickle.load(fo)
+
+            assert data_dict[b'data'].dtype == np.uint8
+            image_data = data_dict[b'data']
+            image_data = image_data.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
+            return image_data, np.array(data_dict[b'labels'])
+
+
+    path = 'cifar'
+    train_filenames = ['data_batch_{}'.format(ii + 1) for ii in range(5)]
+    eval_filename = 'test_batch'
+    metadata_filename = 'batches.meta'
+
+    train_images = np.zeros((50000, 32, 32, 3), dtype='uint8')
+    train_labels = np.zeros(50000, dtype='int32')
+    for ii, fname in enumerate(train_filenames):
+        cur_images, cur_labels = _load_datafile(os.path.join(path, fname))
+        train_images[ii * 10000 : (ii+1) * 10000, ...] = cur_images
+        train_labels[ii * 10000 : (ii+1) * 10000, ...] = cur_labels
+
+    eval_images, eval_labels = _load_datafile(
+            os.path.join(path, eval_filename))
+
+    with open(os.path.join(path, metadata_filename), 'rb') as fo:
+        if version.major == 3:
+          data_dict = pickle.load(fo, encoding='bytes')
+        else:
+          data_dict = pickle.load(fo)
+
+        label_names = data_dict[b'label_names']
+        for ii in range(len(label_names)):
+            label_names[ii] = label_names[ii].decode('utf-8')
+
+
+    X = train_images
+    y = train_labels
+    # Shuffle training data
+    seed = 547
+    np.random.seed(seed)
+    np.random.shuffle(X)
+    np.random.seed(seed)
+    np.random.shuffle(y)
+    y_vec = np.zeros((len(y), 10), dtype=np.float)
+    y_vec[np.arange(0, len(y)), y] = 1.0
+    return X / 255., y_vec
 
 
 def load_celebA4classifier():
