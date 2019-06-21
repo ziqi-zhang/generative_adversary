@@ -95,7 +95,7 @@ def load_svhn(source_class=None, trainonly=False):
     np.random.shuffle(X)
     np.random.seed(seed)
     np.random.shuffle(y)
-    st()
+    
     y_vec = np.zeros((len(y), 10), dtype=np.float)
     y_vec[np.arange(0, len(y)), y] = 1.0
     return X / 255., y_vec
