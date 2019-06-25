@@ -10,7 +10,7 @@ class ACWGAN_GP(object):
     model_name = "ACWGAN_GP"  # name for checkpoint
 
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name, checkpoint_dir, result_dir, log_dir,
-                 dim_G=128, dim_D=128, learning_rate=None):
+                 dim_G=128, dim_D=128, learning_rate=None, data_len = False):
         self.sess = sess
         self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir
@@ -50,11 +50,15 @@ class ACWGAN_GP(object):
             self.len_discrete_code = 10  # categorical distribution (i.e. label)
             self.len_continuous_code = 2  # gaussian distribution (e.g. rotation, thickness)
 
-            # load mnist
-            self.data_X, self.data_y = load_mnist(self.dataset_name)
+            if not data_len:
+                # load mnist
+                self.data_X, self.data_y = load_mnist(self.dataset_name)
 
-            # get number of batches for a single epoch
-            self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+                # get number of batches for a single epoch
+                self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+
+            else:
+                self.num_batches = data_len // (self.batch_size * self.disc_iters)
 
         elif dataset_name == 'svhn':
             self.input_height = 32
@@ -83,10 +87,13 @@ class ACWGAN_GP(object):
             self.y_dim = 10
             self.len_discrete_code = 10  # categorical distribution (i.e. label)
             self.learning_rate = 0.0002 if learning_rate is None else learning_rate
-            self.data_X, self.data_y = load_svhn()
+            if not data_len:
+                self.data_X, self.data_y = load_svhn()
 
-            # get number of batches for a single epoch
-            self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+                # get number of batches for a single epoch
+                self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+            else:
+                self.num_batches = data_len // (self.batch_size * self.disc_iters)
 
         elif dataset_name == 'celebA':
             self.input_height = 64
@@ -377,7 +384,7 @@ class ACWGAN_GP(object):
                 if np.mod(counter, 300) == 0:
                     samples = self.sess.run(self.fake_images,
                                             feed_dict={self.z: self.sample_z, self.y: self.test_codes})
-                    
+
                     tot_num_samples = min(self.sample_num, self.batch_size)
                     manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
                     manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
@@ -467,8 +474,17 @@ class ACWGAN_GP(object):
         checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir, self.model_name)
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+
         if ckpt and ckpt.model_checkpoint_path:
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+
+            # reader = tf.train.NewCheckpointReader(os.path.join(checkpoint_dir, ckpt_name))
+            # var_to_shape_map = reader.get_variable_to_shape_map()
+            # for k in var_to_shape_map.keys():
+            #     if 'beta2_power' in k:
+            #         st()
+            # st()
+
             self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
             counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
             print(" [*] Success to read {}".format(ckpt_name))
