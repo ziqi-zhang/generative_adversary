@@ -14,7 +14,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
 
-def load_mnist(dataset_name, trainonly=False):
+def load_mnist(dataset_name, trainonly=True):
     data_dir = os.path.join(".", dataset_name)
 
     def extract_data(filename, num_data, head_size, data_size):
@@ -60,7 +60,7 @@ def load_mnist(dataset_name, trainonly=False):
     return X / 255., y_vec
 
 
-def load_svhn(source_class=None, trainonly=False):
+def load_svhn(source_class=None, trainonly=True):
     print("[*] Loading SVHN")
     data_dir = os.path.join("svhn")
 
@@ -95,7 +95,7 @@ def load_svhn(source_class=None, trainonly=False):
     np.random.shuffle(X)
     np.random.seed(seed)
     np.random.shuffle(y)
-    
+
     y_vec = np.zeros((len(y), 10), dtype=np.float)
     y_vec[np.arange(0, len(y)), y] = 1.0
     return X / 255., y_vec

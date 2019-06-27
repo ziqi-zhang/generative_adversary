@@ -149,10 +149,14 @@ class ACWGAN_GP(object):
             self.y_dim = 10
             self.len_discrete_code = 10  # categorical distribution (i.e. label)
             self.learning_rate = 0.0002 if learning_rate is None else learning_rate
-            self.data_X, self.data_y = load_cifar()
 
-            # get number of batches for a single epoch
-            self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+            if not data_len:
+                self.data_X, self.data_y = load_cifar()
+
+                # get number of batches for a single epoch
+                self.num_batches = len(self.data_X) // (self.batch_size * self.disc_iters)
+            else:
+                self.num_batches = data_len // (self.batch_size * self.disc_iters)
         else:
             raise NotImplementedError
 
